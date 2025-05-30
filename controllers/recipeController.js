@@ -1,85 +1,63 @@
-const Recipe = require('../models/Recipe');
+import Recipe from '../models/Recipe.js';
 
-exports.createRecipe = async (req, res) => {
-  const recipe = await Recipe.create({ ...req.body, author: req.userId });
-  res.json(recipe);
+export const getRecipes = async (req, res) => {
+  const page = +req.query.page || 1;
+  const limit = +req.query.limit || 6;
+  const search = req.query.search || '';
+
+  const query = search
+    ? { $or: [
+        { title: { $regex: search, $options: 'i' } },
+        { ingredients: { $regex: search, $options: 'i' } }
+      ]}
+    : {};
+
+  const total = await Recipe.countDocuments(query);
+  const recipes = await Recipe.find(query)
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+  res.json({ recipes, total });
 };
 
-exports.getMyRecipes = async (req, res) => {
-  const recipes = await Recipe.find({ author: req.userId });
-  res.json(recipes);
-};
-
-exports.getSharedRecipes = async (req, res) => {
-  const recipes = await Recipe.find({ sharedWith: req.userId });
-  res.json(recipes);
-};
-
-exports.searchRecipes = async (req, res) => {
-  const { ingredient } = req.query;
-  const recipes = await Recipe.find({
-    ingredients: { $regex: ingredient, $options: 'i' },
-    $or: [
-      { author: req.userId },
-      { sharedWith: req.userId }
-    ]
-  });
-  res.json(recipes);
-};
-
-exports.getRecipeById = async (req, res) => {
-  const recipe = await Recipe.findById(req.params.id);
-  if (!recipe || (recipe.author.toString() !== req.userId && !recipe.sharedWith.includes(req.userId))) {
-    return res.status(403).json({ message: 'Not authorized' });
-  }
-  res.json(recipe);
-};
-
-exports.updateRecipe = async (req, res) => {
-  const recipe = await Recipe.findById(req.params.id);
-  if (!recipe || recipe.author.toString() !== req.userId) {
-    return res.status(403).json({ message: 'Not authorized' });
-  }
-  Object.assign(recipe, req.body);
-  await recipe.save();
-  res.json(recipe);
-};
-
-exports.deleteRecipe = async (req, res) => {
-  const recipe = await Recipe.findById(req.params.id);
-  if (!recipe || recipe.author.toString() !== req.userId) {
-    return res.status(403).json({ message: 'Not authorized' });
-  }
-  await recipe.remove();
-  res.json({ message: 'Deleted' });
-};
-
-exports.rateRecipe = async (req, res) => {
-  const { score } = req.body;
+export const getRecipeById = async (req, res) => {
   const recipe = await Recipe.findById(req.params.id);
   if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
-
-  const existingRating = recipe.ratings.find(r => r.user.toString() === req.userId);
-  if (existingRating) {
-    existingRating.score = score;
-  } else {
-    recipe.ratings.push({ user: req.userId, score });
-  }
-
-  await recipe.save();
   res.json(recipe);
 };
 
-exports.shareRecipe = async (req, res) => {
-  const { userIdToShare } = req.body;
-  const recipe = await Recipe.findById(req.params.id);
-  if (!recipe || recipe.author.toString() !== req.userId) {
-    return res.status(403).json({ message: 'Not authorized' });
-  }
+export const createRecipe = async (req, res) => {
+  const { title, description, ingredients, rating } = req.body;
+  const recipe = new Recipe({
+    title,
+    description,
+    ingredients,
+    rating,
+    createdBy: req.user.name,
+    userId: req.user._id,
+  });
+  const created = await recipe.save();
+  res.status(201).json(created);
+};
 
-  if (!recipe.sharedWith.includes(userIdToShare)) {
-    recipe.sharedWith.push(userIdToShare);
-    await recipe.save();
-  }
-  res.json({ message: 'Shared' });
+export const updateRecipe = async (req, res) => {
+  const recipe = await Recipe.findById(req.params.id);
+  if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
+  if (recipe.userId.toString() !== req.user._id.toString())
+    return res.status(401).json({ message: 'Not authorized' });
+
+  Object.assign(recipe, req.body);
+  const updated = await recipe.save();
+  res.json(updated);
+};
+
+export const deleteRecipe = async (req, res) => {
+  const recipe = await Recipe.findById(req.params.id);
+  if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
+  if (recipe.userId.toString() !== req.user._id.toString())
+    return res.status(401).json({ message: 'Not authorized' });
+
+  await recipe.deleteOne();
+  res.json({ message: 'Recipe deleted' });
 };
