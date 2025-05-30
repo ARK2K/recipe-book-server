@@ -1,10 +1,10 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-import connectDB from './config/db.js';
-import recipeRoutes from './routes/recipeRoutes.js';
-import userRoutes from './routes/userRoutes.js';
-import { notFound, errorHandler } from './middleware/errorMiddleware.js';
+const connectDB = require('./config/db');
+const recipeRoutes = require('./routes/recipeRoutes');
+const userRoutes = require('./routes/userRoutes');
+const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 dotenv.config();
 connectDB();
@@ -13,7 +13,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Wake-up ping
 app.get('/api/ping', (req, res) => res.send('Pong!'));
 
 app.use('/api/recipes', recipeRoutes);

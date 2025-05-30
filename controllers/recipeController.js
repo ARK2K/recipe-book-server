@@ -1,15 +1,17 @@
-import Recipe from '../models/Recipe.js';
+const Recipe = require('../models/Recipe');
 
-export const getRecipes = async (req, res) => {
+const getRecipes = async (req, res) => {
   const page = +req.query.page || 1;
   const limit = +req.query.limit || 6;
   const search = req.query.search || '';
 
   const query = search
-    ? { $or: [
-        { title: { $regex: search, $options: 'i' } },
-        { ingredients: { $regex: search, $options: 'i' } }
-      ]}
+    ? {
+        $or: [
+          { title: { $regex: search, $options: 'i' } },
+          { ingredients: { $regex: search, $options: 'i' } },
+        ],
+      }
     : {};
 
   const total = await Recipe.countDocuments(query);
@@ -21,13 +23,13 @@ export const getRecipes = async (req, res) => {
   res.json({ recipes, total });
 };
 
-export const getRecipeById = async (req, res) => {
+const getRecipeById = async (req, res) => {
   const recipe = await Recipe.findById(req.params.id);
   if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
   res.json(recipe);
 };
 
-export const createRecipe = async (req, res) => {
+const createRecipe = async (req, res) => {
   const { title, description, ingredients, rating } = req.body;
   const recipe = new Recipe({
     title,
@@ -41,7 +43,7 @@ export const createRecipe = async (req, res) => {
   res.status(201).json(created);
 };
 
-export const updateRecipe = async (req, res) => {
+const updateRecipe = async (req, res) => {
   const recipe = await Recipe.findById(req.params.id);
   if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
   if (recipe.userId.toString() !== req.user._id.toString())
@@ -52,7 +54,7 @@ export const updateRecipe = async (req, res) => {
   res.json(updated);
 };
 
-export const deleteRecipe = async (req, res) => {
+const deleteRecipe = async (req, res) => {
   const recipe = await Recipe.findById(req.params.id);
   if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
   if (recipe.userId.toString() !== req.user._id.toString())
@@ -60,4 +62,12 @@ export const deleteRecipe = async (req, res) => {
 
   await recipe.deleteOne();
   res.json({ message: 'Recipe deleted' });
+};
+
+module.exports = {
+  getRecipes,
+  getRecipeById,
+  createRecipe,
+  updateRecipe,
+  deleteRecipe,
 };
