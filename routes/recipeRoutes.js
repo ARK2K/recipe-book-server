@@ -1,12 +1,12 @@
 const express = require('express');
-const {
+import {
   getRecipes,
   getRecipeById,
   createRecipe,
   updateRecipe,
   deleteRecipe,
-} = require('../controllers/recipeController');
-const { protect } = require('../middleware/authMiddleware');
+} from '../controllers/recipeController';
+import { protect } from '../middleware/authMiddleware';
 
 const router = express.Router();
 

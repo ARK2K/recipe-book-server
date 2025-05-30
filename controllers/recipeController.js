@@ -1,4 +1,4 @@
-const Recipe = require('../models/Recipe');
+import Recipe from '../models/Recipe';
 
 const getRecipes = async (req, res) => {
   const page = +req.query.page || 1;
