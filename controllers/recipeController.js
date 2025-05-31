@@ -30,12 +30,11 @@ const getRecipeById = async (req, res) => {
 };
 
 const createRecipe = async (req, res) => {
-  const { title, description, ingredients, rating } = req.body;
+  const { title, description, ingredients } = req.body;
   const recipe = new Recipe({
     title,
     description,
     ingredients,
-    rating,
     createdBy: req.user.name,
     userId: req.user._id,
   });
@@ -64,10 +63,42 @@ const deleteRecipe = async (req, res) => {
   res.json({ message: 'Recipe deleted' });
 };
 
+const rateRecipe = async (req, res) => {
+  const { id } = req.params;
+  const { rating } = req.body;
+
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+  }
+
+  try {
+    const recipe = await Recipe.findById(id);
+    if (!recipe) {
+      return res.status(404).json({ message: 'Recipe not found' });
+    }
+
+    // Use userId field for ratings array
+    const existing = recipe.ratings.find(r => r.userId.toString() === req.user._id.toString());
+    if (existing) {
+      existing.rating = rating; // update existing rating
+    } else {
+      recipe.ratings.push({ userId: req.user._id, rating });
+    }
+
+    await recipe.save();
+
+    // Return updated recipe with averageRating virtual included
+    res.status(200).json(recipe);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   getRecipes,
   getRecipeById,
   createRecipe,
   updateRecipe,
   deleteRecipe,
+  rateRecipe,
 };
