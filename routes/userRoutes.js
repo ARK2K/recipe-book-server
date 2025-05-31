@@ -1,5 +1,5 @@
 const express = require('express');
-import { registerUser, loginUser } from '../controllers/userController';
+const { registerUser, loginUser } = require('../controllers/userController');
 
 const router = express.Router();
 router.post('/register', registerUser);

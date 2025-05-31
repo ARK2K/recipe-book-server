@@ -1,10 +1,10 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-import connectDB from './config/db';
-import recipeRoutes from './routes/recipeRoutes';
-import userRoutes from './routes/userRoutes';
-import { notFound, errorHandler } from './middleware/errorMiddleware';
+const connectDB = require('./config/db');
+const recipeRoutes = require('./routes/recipeRoutes');
+const userRoutes = require('./routes/userRoutes');
+const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 dotenv.config();
 connectDB();
