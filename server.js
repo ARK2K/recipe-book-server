@@ -34,12 +34,15 @@ mongoose.connect(process.env.MONGO_URI)
     process.exit(1);
   });
 
+// Import your new health routes
+const healthRoutes = require('./routes/healthRoutes');
+
+// Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/recipes', require('./routes/recipeRoutes'));
 
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ message: 'Backend is awake and healthy!' });
-});
+// Add the health check route under /api
+app.use('/api', healthRoutes);
 
 app.get('/', (req, res) => {
   res.send('Recipe Book API is running!');
