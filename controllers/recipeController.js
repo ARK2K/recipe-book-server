@@ -1,5 +1,5 @@
 const asyncHandler = require('express-async-handler');
-const Recipe = require('../models/recipeModel');
+const Recipe = require('../models/Recipe');
 const cloudinary = require('../config/cloudinaryConfig');
 const multer = require('multer');
 
