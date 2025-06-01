@@ -1,4 +1,4 @@
-require('dotenv').config({ path: './config/config.env' });
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -34,14 +34,12 @@ mongoose.connect(process.env.MONGO_URI)
     process.exit(1);
   });
 
-// Import your new health routes
+const authRoutes = require('./routes/authRoutes');
+const recipeRoutes = require('./routes/recipeRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 
-// Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/recipes', require('./routes/recipeRoutes'));
-
-// Add the health check route under /api
+app.use('/api/auth', authRoutes);
+app.use('/api/recipes', recipeRoutes);
 app.use('/api', healthRoutes);
 
 app.get('/', (req, res) => {

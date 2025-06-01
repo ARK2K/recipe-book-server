@@ -1,54 +1,120 @@
-const express = require('express');
-const { protect } = require('../middleware/authMiddleware');
-const {
-  createRecipe,
-  getRecipes,
-  getRecipeById,
-  updateRecipe,
-  deleteRecipe,
-  rateRecipe
-} = require('../controllers/recipeController');
-const { check } = require('express-validator');
-const multer = require('multer'); // For image uploads
+const asyncHandler = require('express-async-handler');
+const Recipe = require('../models/recipeModel');
+const cloudinary = require('../config/cloudinaryConfig');
+const multer = require('multer');
 
-const router = express.Router();
-
-// Multer storage for in-memory buffer (to send to Cloudinary)
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-router
-  .route('/')
-  .post(
-    protect,
-    upload.single('image'), // 'image' is the field name for the file
-    [
-      check('title', 'Title is required').not().isEmpty(),
-      check('description', 'Description is required').not().isEmpty(),
-      check('ingredients', 'Ingredients are required').not().isEmpty(),
-      check('instructions', 'Instructions are required').not().isEmpty(),
-    ],
-    createRecipe
-  )
-  .get(getRecipes);
+const createRecipe = asyncHandler(async (req, res) => {
+    const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
 
-router
-  .route('/:id')
-  .get(getRecipeById)
-  .put(
-    protect,
-    upload.single('image'),
-    [
-      check('title', 'Title is required').optional().not().isEmpty(),
-      check('description', 'Description is required').optional().not().isEmpty(),
-      check('ingredients', 'Ingredients are required').optional().not().isEmpty(),
-      check('instructions', 'Instructions are required').optional().not().isEmpty(),
-    ],
-    updateRecipe
-  )
-  .delete(protect, deleteRecipe);
+    if (!title || !description || !ingredients || !instructions) {
+        res.status(400);
+        throw new Error('Please fill all required fields');
+    }
 
-router.route('/:id/rate').post(protect, rateRecipe);
+    const recipe = await Recipe.create({
+        user: req.user._id,
+        title,
+        description,
+        ingredients,
+        instructions,
+        imageUrl,
+        category,
+        tags
+    });
 
+    res.status(201).json(recipe);
+});
 
-module.exports = router;
+const getRecipes = asyncHandler(async (req, res) => {
+    const recipes = await Recipe.find({});
+    res.status(200).json(recipes);
+});
+
+const getRecipeById = asyncHandler(async (req, res) => {
+    const recipe = await Recipe.findById(req.params.id);
+
+    if (recipe) {
+        res.status(200).json(recipe);
+    } else {
+        res.status(404);
+        throw new Error('Recipe not found');
+    }
+});
+
+const updateRecipe = asyncHandler(async (req, res) => {
+    const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
+
+    const recipe = await Recipe.findById(req.params.id);
+
+    if (recipe) {
+        if (recipe.user.toString() !== req.user.id) {
+            res.status(401);
+            throw new Error('User not authorized');
+        }
+
+        recipe.title = title || recipe.title;
+        recipe.description = description || recipe.description;
+        recipe.ingredients = ingredients || recipe.ingredients;
+        recipe.instructions = instructions || recipe.instructions;
+        recipe.imageUrl = imageUrl || recipe.imageUrl;
+        recipe.category = category || recipe.category;
+        recipe.tags = tags || recipe.tags;
+
+        const updatedRecipe = await recipe.save();
+        res.status(200).json(updatedRecipe);
+    } else {
+        res.status(404);
+        throw new Error('Recipe not found');
+    }
+});
+
+const deleteRecipe = asyncHandler(async (req, res) => {
+    const recipe = await Recipe.findById(req.params.id);
+
+    if (recipe) {
+        if (recipe.user.toString() !== req.user.id) {
+            res.status(401);
+            throw new Error('User not authorized');
+        }
+        await recipe.deleteOne();
+        res.status(200).json({ message: 'Recipe removed' });
+    } else {
+        res.status(404);
+        throw new Error('Recipe not found');
+    }
+});
+
+const uploadImage = asyncHandler(async (req, res) => {
+    upload.single('image')(req, res, async (err) => {
+        if (err) {
+            res.status(400);
+            throw new Error(err.message);
+        }
+        if (!req.file) {
+            res.status(400);
+            throw new Error('No image file provided');
+        }
+        try {
+            const b64 = Buffer.from(req.file.buffer).toString('base64');
+            const dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
+            const result = await cloudinary.uploader.upload(dataURI);
+            res.status(200).json({ imageUrl: result.secure_url });
+        } catch (error) {
+            res.status(500);
+            throw new Error('Image upload to Cloudinary failed: ' + error.message);
+        }
+    });
+});
+
+module.exports = {
+    createRecipe,
+    getRecipes,
+    getRecipeById,
+    updateRecipe,
+    deleteRecipe,
+    uploadImage,
+    upload
+};
