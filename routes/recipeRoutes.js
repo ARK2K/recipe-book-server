@@ -26,7 +26,7 @@ const createRecipe = asyncHandler(async (req, res) => {
     instructions,
     imageUrl,
     category,
-    tags
+    tags,
   });
 
   res.status(201).json(recipe);
@@ -39,7 +39,6 @@ const getRecipes = asyncHandler(async (req, res) => {
 
 const getRecipeById = asyncHandler(async (req, res) => {
   const recipe = await Recipe.findById(req.params.id);
-
   if (recipe) {
     res.status(200).json(recipe);
   } else {
@@ -82,7 +81,6 @@ const updateRecipe = asyncHandler(async (req, res) => {
 
 const deleteRecipe = asyncHandler(async (req, res) => {
   const recipe = await Recipe.findById(req.params.id);
-
   if (recipe) {
     if (recipe.user.toString() !== req.user.id) {
       res.status(401);
@@ -109,12 +107,12 @@ const uploadImage = asyncHandler(async (req, res) => {
   res.status(200).json({ imageUrl: result.secure_url });
 });
 
+router.get('/my-recipes', protect, getUserRecipes);
 router.get('/', getRecipes);
 router.post('/', protect, createRecipe);
 router.get('/:id', getRecipeById);
 router.put('/:id', protect, updateRecipe);
 router.delete('/:id', protect, deleteRecipe);
 router.post('/upload', protect, upload.single('image'), uploadImage);
-router.get('/my-recipes', protect, getUserRecipes);
 
 module.exports = router;
