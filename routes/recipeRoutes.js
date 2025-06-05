@@ -48,6 +48,15 @@ const getRecipeById = asyncHandler(async (req, res) => {
   }
 });
 
+const getUserRecipes = async (req, res) => {
+  try {
+    const recipes = await Recipe.find({ user: req.user._id });
+    res.json(recipes);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch user recipes' });
+  }
+};
+
 const updateRecipe = asyncHandler(async (req, res) => {
   const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
 
