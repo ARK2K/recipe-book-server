@@ -33,6 +33,15 @@ const getRecipes = asyncHandler(async (req, res) => {
     res.status(200).json(recipes);
 });
 
+const getUserRecipes = async (req, res) => {
+  try {
+    const recipes = await Recipe.find({ user: req.user._id });
+    res.json(recipes);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch user recipes' });
+  }
+};
+
 const getRecipeById = asyncHandler(async (req, res) => {
     const recipe = await Recipe.findById(req.params.id);
 
@@ -112,6 +121,7 @@ const uploadImage = asyncHandler(async (req, res) => {
 module.exports = {
     createRecipe,
     getRecipes,
+    getUserRecipes,
     getRecipeById,
     updateRecipe,
     deleteRecipe,

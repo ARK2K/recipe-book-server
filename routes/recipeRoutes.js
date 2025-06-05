@@ -115,5 +115,6 @@ router.get('/:id', getRecipeById);
 router.put('/:id', protect, updateRecipe);
 router.delete('/:id', protect, deleteRecipe);
 router.post('/upload', protect, upload.single('image'), uploadImage);
+router.get('/my-recipes', protect, getUserRecipes);
 
 module.exports = router;
