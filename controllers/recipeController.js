@@ -7,30 +7,49 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 const createRecipe = asyncHandler(async (req, res) => {
-    const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
+  const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
 
-    if (!title || !description || !ingredients || !instructions) {
-        res.status(400);
-        throw new Error('Please fill all required fields');
-    }
+  if (!title || !description || !ingredients || !instructions) {
+    res.status(400);
+    throw new Error('Please fill all required fields');
+  }
 
-    const recipe = await Recipe.create({
-        user: req.user._id,
-        title,
-        description,
-        ingredients,
-        instructions,
-        imageUrl,
-        category,
-        tags
-    });
+  const recipe = await Recipe.create({
+    user: req.user._id,
+    title,
+    description,
+    ingredients,
+    instructions,
+    imageUrl,
+    category,
+    tags
+  });
 
-    res.status(201).json(recipe);
+  res.status(201).json(recipe);
 });
 
 const getRecipes = asyncHandler(async (req, res) => {
-    const recipes = await Recipe.find({});
-    res.status(200).json(recipes);
+  const { sort, ingredient } = req.query;
+
+  let query = {};
+  if (ingredient) {
+    query.ingredients = { $regex: new RegExp(ingredient, 'i') };
+  }
+
+  let sortOption = { createdAt: -1 };
+  if (sort === 'oldest') sortOption = { createdAt: 1 };
+  else if (sort === 'rating') sortOption = { averageRating: -1 };
+
+  const recipes = await Recipe.find(query)
+    .populate('user', 'name')
+    .sort(sortOption);
+
+  const formatted = recipes.map(recipe => ({
+    ...recipe._doc,
+    creatorName: recipe.user?.name || 'Unknown'
+  }));
+
+  res.status(200).json(formatted);
 });
 
 const getUserRecipes = async (req, res) => {
@@ -43,88 +62,91 @@ const getUserRecipes = async (req, res) => {
 };
 
 const getRecipeById = asyncHandler(async (req, res) => {
-    const recipe = await Recipe.findById(req.params.id);
+  const recipe = await Recipe.findById(req.params.id).populate('user', 'name');
 
-    if (recipe) {
-        res.status(200).json(recipe);
-    } else {
-        res.status(404);
-        throw new Error('Recipe not found');
-    }
+  if (recipe) {
+    res.status(200).json({
+      ...recipe._doc,
+      creatorName: recipe.user?.name || 'Unknown'
+    });
+  } else {
+    res.status(404);
+    throw new Error('Recipe not found');
+  }
 });
 
 const updateRecipe = asyncHandler(async (req, res) => {
-    const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
+  const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
 
-    const recipe = await Recipe.findById(req.params.id);
+  const recipe = await Recipe.findById(req.params.id);
 
-    if (recipe) {
-        if (recipe.user.toString() !== req.user.id) {
-            res.status(401);
-            throw new Error('User not authorized');
-        }
-
-        recipe.title = title || recipe.title;
-        recipe.description = description || recipe.description;
-        recipe.ingredients = ingredients || recipe.ingredients;
-        recipe.instructions = instructions || recipe.instructions;
-        recipe.imageUrl = imageUrl || recipe.imageUrl;
-        recipe.category = category || recipe.category;
-        recipe.tags = tags || recipe.tags;
-
-        const updatedRecipe = await recipe.save();
-        res.status(200).json(updatedRecipe);
-    } else {
-        res.status(404);
-        throw new Error('Recipe not found');
+  if (recipe) {
+    if (recipe.user.toString() !== req.user.id) {
+      res.status(401);
+      throw new Error('User not authorized');
     }
+
+    recipe.title = title || recipe.title;
+    recipe.description = description || recipe.description;
+    recipe.ingredients = ingredients || recipe.ingredients;
+    recipe.instructions = instructions || recipe.instructions;
+    recipe.imageUrl = imageUrl || recipe.imageUrl;
+    recipe.category = category || recipe.category;
+    recipe.tags = tags || recipe.tags;
+
+    const updatedRecipe = await recipe.save();
+    res.status(200).json(updatedRecipe);
+  } else {
+    res.status(404);
+    throw new Error('Recipe not found');
+  }
 });
 
 const deleteRecipe = asyncHandler(async (req, res) => {
-    const recipe = await Recipe.findById(req.params.id);
+  const recipe = await Recipe.findById(req.params.id);
 
-    if (recipe) {
-        if (recipe.user.toString() !== req.user.id) {
-            res.status(401);
-            throw new Error('User not authorized');
-        }
-        await recipe.deleteOne();
-        res.status(200).json({ message: 'Recipe removed' });
-    } else {
-        res.status(404);
-        throw new Error('Recipe not found');
+  if (recipe) {
+    if (recipe.user.toString() !== req.user.id) {
+      res.status(401);
+      throw new Error('User not authorized');
     }
+    await recipe.deleteOne();
+    res.status(200).json({ message: 'Recipe removed' });
+  } else {
+    res.status(404);
+    throw new Error('Recipe not found');
+  }
 });
 
 const uploadImage = asyncHandler(async (req, res) => {
-    upload.single('image')(req, res, async (err) => {
-        if (err) {
-            res.status(400);
-            throw new Error(err.message);
-        }
-        if (!req.file) {
-            res.status(400);
-            throw new Error('No image file provided');
-        }
-        try {
-            const b64 = Buffer.from(req.file.buffer).toString('base64');
-            const dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
-            const result = await cloudinary.uploader.upload(dataURI);
-            res.status(200).json({ imageUrl: result.secure_url });
-        } catch (error) {
-            res.status(500);
-            throw new Error('Image upload to Cloudinary failed: ' + error.message);
-        }
-    });
+  upload.single('image')(req, res, async (err) => {
+    if (err) {
+      res.status(400);
+      throw new Error(err.message);
+    }
+    if (!req.file) {
+      res.status(400);
+      throw new Error('No image file provided');
+    }
+    try {
+      const b64 = Buffer.from(req.file.buffer).toString('base64');
+      const dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
+      const result = await cloudinary.uploader.upload(dataURI);
+      res.status(200).json({ imageUrl: result.secure_url });
+    } catch (error) {
+      res.status(500);
+      throw new Error('Image upload to Cloudinary failed: ' + error.message);
+    }
+  });
 });
 
 module.exports = {
-    createRecipe,
-    getRecipes,
-    getUserRecipes,
-    getRecipeById,
-    updateRecipe,
-    deleteRecipe,
-    uploadImage,
-    upload
+  createRecipe,
+  getRecipes,
+  getUserRecipes,
+  getRecipeById,
+  updateRecipe,
+  deleteRecipe,
+  uploadImage,
+  upload
 };
