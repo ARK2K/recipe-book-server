@@ -48,14 +48,10 @@ const getRecipeById = asyncHandler(async (req, res) => {
   }
 });
 
-const getUserRecipes = async (req, res) => {
-  try {
-    const recipes = await Recipe.find({ user: req.user._id });
-    res.json(recipes);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch user recipes' });
-  }
-};
+const getUserRecipes = asyncHandler(async (req, res) => {
+  const recipes = await Recipe.find({ user: req.user._id });
+  res.status(200).json(recipes);
+});
 
 const updateRecipe = asyncHandler(async (req, res) => {
   const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
@@ -109,13 +105,8 @@ const uploadImage = asyncHandler(async (req, res) => {
   const b64 = Buffer.from(req.file.buffer).toString('base64');
   const dataURI = `data:${req.file.mimetype};base64,${b64}`;
 
-  try {
-    const result = await cloudinary.uploader.upload(dataURI);
-    res.status(200).json({ imageUrl: result.secure_url });
-  } catch (error) {
-    res.status(500);
-    throw new Error('Image upload to Cloudinary failed: ' + error.message);
-  }
+  const result = await cloudinary.uploader.upload(dataURI);
+  res.status(200).json({ imageUrl: result.secure_url });
 });
 
 router.get('/', getRecipes);
