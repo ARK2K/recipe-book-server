@@ -39,7 +39,7 @@ const authRoutes = require('./routes/authRoutes');
 const recipeRoutes = require('./routes/recipeRoutes');
 const healthRoutes = require('./routes/healthRoutes');
 
-app.use('/api/auth', authRoutes);
+app.use('/api/users', authRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api', healthRoutes);
 
