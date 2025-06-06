@@ -25,49 +25,29 @@ const createRecipe = asyncHandler(async (req, res) => {
     tags
   });
 
-  res.status(201).json(recipe);
+  const populatedRecipe = await Recipe.findById(recipe._id).populate('user', 'name');
+
+  res.status(201).json({
+    ...populatedRecipe._doc,
+    creatorName: populatedRecipe.user?.name || 'Unknown',
+  });
 });
 
 const getRecipes = asyncHandler(async (req, res) => {
-  const { sort, ingredient } = req.query;
-
-  let query = {};
-  if (ingredient) {
-    query.ingredients = { $regex: new RegExp(ingredient, 'i') };
-  }
-
-  let sortOption = { createdAt: -1 };
-  if (sort === 'oldest') sortOption = { createdAt: 1 };
-  else if (sort === 'rating') sortOption = { averageRating: -1 };
-
-  const recipes = await Recipe.find(query)
-    .populate('user', 'name')
-    .sort(sortOption);
-
+  const recipes = await Recipe.find({}).populate('user', 'name');
   const formatted = recipes.map(recipe => ({
     ...recipe._doc,
-    creatorName: recipe.user?.name || 'Unknown'
+    creatorName: recipe.user?.name || 'Unknown',
   }));
-
   res.status(200).json(formatted);
 });
 
-const getUserRecipes = async (req, res) => {
-  try {
-    const recipes = await Recipe.find({ user: req.user._id });
-    res.json(recipes);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch user recipes' });
-  }
-};
-
 const getRecipeById = asyncHandler(async (req, res) => {
   const recipe = await Recipe.findById(req.params.id).populate('user', 'name');
-
   if (recipe) {
     res.status(200).json({
       ...recipe._doc,
-      creatorName: recipe.user?.name || 'Unknown'
+      creatorName: recipe.user?.name || 'Unknown',
     });
   } else {
     res.status(404);
@@ -75,9 +55,13 @@ const getRecipeById = asyncHandler(async (req, res) => {
   }
 });
 
+const getUserRecipes = asyncHandler(async (req, res) => {
+  const recipes = await Recipe.find({ user: req.user._id });
+  res.status(200).json(recipes);
+});
+
 const updateRecipe = asyncHandler(async (req, res) => {
   const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
-
   const recipe = await Recipe.findById(req.params.id);
 
   if (recipe) {
@@ -130,7 +114,7 @@ const uploadImage = asyncHandler(async (req, res) => {
     }
     try {
       const b64 = Buffer.from(req.file.buffer).toString('base64');
-      const dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
+      const dataURI = `data:${req.file.mimetype};base64,${b64}`;
       const result = await cloudinary.uploader.upload(dataURI);
       res.status(200).json({ imageUrl: result.secure_url });
     } catch (error) {
@@ -143,8 +127,8 @@ const uploadImage = asyncHandler(async (req, res) => {
 module.exports = {
   createRecipe,
   getRecipes,
-  getUserRecipes,
   getRecipeById,
+  getUserRecipes,
   updateRecipe,
   deleteRecipe,
   uploadImage,
