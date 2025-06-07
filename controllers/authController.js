@@ -25,7 +25,6 @@ const registerUser = async (req, res) => {
   if (userExists) return res.status(400).json({ message: 'User already exists' });
 
   const user = await User.create({ name, email, password });
-
   if (!user) return res.status(400).json({ message: 'Invalid user data' });
 
   const token = generateToken(user._id);
@@ -68,9 +67,20 @@ const logoutUser = (req, res) => {
   res.status(200).json({ message: 'Logged out' });
 };
 
+const getUserProfile = async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: 'Not authorized' });
+
+  res.json({
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+  });
+};
+
 module.exports = {
   registerUser,
   loginUser,
   refreshToken,
   logoutUser,
+  getUserProfile,
 };
