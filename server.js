@@ -51,6 +51,9 @@ app.get('/', (req, res) => {
 
 app.use(errorHandler);
 
+console.log('JWT_SECRET:', process.env.JWT_SECRET?.length);
+console.log('REFRESH_TOKEN_SECRET:', process.env.REFRESH_TOKEN_SECRET?.length);
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
