@@ -77,9 +77,22 @@ const logoutUser = (req, res) => {
   res.status(200).json({ message: 'Logged out' });
 };
 
+const getUserProfile = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'User not authenticated' });
+  }
+
+  res.status(200).json({
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+  });
+};
+
 module.exports = {
   registerUser,
   loginUser,
   refreshToken,
   logoutUser,
+  getUserProfile,
 };
