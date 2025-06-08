@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require('express'); 
 const {
   createRecipe,
   getRecipes,
@@ -13,12 +13,10 @@ const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
 
 router.post('/upload', protect, uploadImage);
-
-router.get('/', getRecipes);
-router.get('/:id', getRecipeById);
-
-router.post('/', protect, createRecipe);
 router.get('/my-recipes', protect, getUserRecipes);
+router.get('/', getRecipes);
+router.post('/', protect, createRecipe);
+router.get('/:id', getRecipeById);
 router.put('/:id', protect, updateRecipe);
 router.delete('/:id', protect, deleteRecipe);
 
