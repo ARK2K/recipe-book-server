@@ -22,7 +22,7 @@ const createRecipe = asyncHandler(async (req, res) => {
     instructions,
     imageUrl,
     category,
-    tags
+    tags,
   });
 
   const populatedRecipe = await Recipe.findById(recipe._id).populate('user', 'name');
@@ -35,7 +35,7 @@ const createRecipe = asyncHandler(async (req, res) => {
 
 const getRecipes = asyncHandler(async (req, res) => {
   const recipes = await Recipe.find({}).populate('user', 'name');
-  const formatted = recipes.map(recipe => ({
+  const formatted = recipes.map((recipe) => ({
     ...recipe._doc,
     creatorName: recipe.user?.name || 'Unknown',
   }));
@@ -102,27 +102,31 @@ const deleteRecipe = asyncHandler(async (req, res) => {
   }
 });
 
-const uploadImage = asyncHandler(async (req, res) => {
+const uploadImage = (req, res) => {
   upload.single('image')(req, res, async (err) => {
     if (err) {
-      res.status(400);
-      throw new Error(err.message);
+      console.error('Multer error:', err);
+      return res.status(400).json({ message: err.message });
     }
+
     if (!req.file) {
-      res.status(400);
-      throw new Error('No image file provided');
+      console.error('No file received in request');
+      return res.status(400).json({ message: 'No image file provided' });
     }
+
     try {
       const b64 = Buffer.from(req.file.buffer).toString('base64');
       const dataURI = `data:${req.file.mimetype};base64,${b64}`;
       const result = await cloudinary.uploader.upload(dataURI);
+
+      console.log('Image uploaded to Cloudinary:', result.secure_url);
       res.status(200).json({ imageUrl: result.secure_url });
     } catch (error) {
-      res.status(500);
-      throw new Error('Image upload to Cloudinary failed: ' + error.message);
+      console.error('Cloudinary upload error:', error.message);
+      res.status(500).json({ message: 'Image upload to Cloudinary failed: ' + error.message });
     }
   });
-});
+};
 
 module.exports = {
   createRecipe,
@@ -132,5 +136,5 @@ module.exports = {
   updateRecipe,
   deleteRecipe,
   uploadImage,
-  upload
+  upload,
 };

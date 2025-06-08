@@ -6,19 +6,20 @@ const {
   getUserRecipes,
   updateRecipe,
   deleteRecipe,
-  uploadImage,
-  upload
+  uploadImage
 } = require('../controllers/recipeController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
+router.post('/upload', protect, uploadImage);
+
 router.get('/', getRecipes);
+router.get('/:id', getRecipeById);
+
 router.post('/', protect, createRecipe);
 router.get('/my-recipes', protect, getUserRecipes);
-router.get('/:id', getRecipeById);
 router.put('/:id', protect, updateRecipe);
 router.delete('/:id', protect, deleteRecipe);
-router.post('/upload', protect, upload.single('image'), uploadImage);
 
 module.exports = router;
