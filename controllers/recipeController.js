@@ -56,8 +56,12 @@ const getRecipeById = asyncHandler(async (req, res) => {
 });
 
 const getUserRecipes = asyncHandler(async (req, res) => {
-  const recipes = await Recipe.find({ user: req.user._id });
-  res.status(200).json(recipes);
+  const recipes = await Recipe.find({ user: req.user._id }).populate('user', 'name');
+  const formatted = recipes.map((recipe) => ({
+    ...recipe._doc,
+    creatorName: recipe.user?.name || 'Unknown',
+  }));
+  res.status(200).json(formatted);
 });
 
 const updateRecipe = asyncHandler(async (req, res) => {
