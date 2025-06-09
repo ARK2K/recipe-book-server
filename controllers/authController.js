@@ -2,20 +2,10 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const generateToken = (id) => {
-  if (!process.env.JWT_SECRET) {
-    console.error('❌ JWT_SECRET is missing!');
-  } else {
-    console.log('✅ JWT_SECRET loaded with length:', process.env.JWT_SECRET.length);
-  }
-
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '15m' });
 };
 
 const generateRefreshToken = (id) => {
-  if (!process.env.REFRESH_TOKEN_SECRET) {
-    console.error('❌ REFRESH_TOKEN_SECRET is missing!');
-  }
-
   return jwt.sign({ id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
 };
 
@@ -73,7 +63,11 @@ const refreshToken = (req, res) => {
 };
 
 const logoutUser = (req, res) => {
-  res.clearCookie('refreshToken');
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Strict',
+  });
   res.status(200).json({ message: 'Logged out' });
 };
 
