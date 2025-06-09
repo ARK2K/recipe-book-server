@@ -47,6 +47,7 @@ const getRecipeById = asyncHandler(async (req, res) => {
   if (recipe) {
     res.status(200).json({
       ...recipe._doc,
+      creator: recipe.user?._id,
       creatorName: recipe.user?.name || 'Unknown',
     });
   } else {
