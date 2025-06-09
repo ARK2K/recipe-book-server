@@ -30,38 +30,46 @@ const createRecipe = asyncHandler(async (req, res) => {
   res.status(201).json({
     ...populatedRecipe._doc,
     creatorName: populatedRecipe.user?.name || 'Unknown',
+    creatorId: populatedRecipe.user?._id.toString() || '',
   });
 });
 
 const getRecipes = asyncHandler(async (req, res) => {
   const recipes = await Recipe.find({}).populate('user', 'name');
+
   const formatted = recipes.map((recipe) => ({
     ...recipe._doc,
     creatorName: recipe.user?.name || 'Unknown',
+    creatorId: recipe.user?._id.toString() || '',
   }));
+
   res.status(200).json(formatted);
 });
 
 const getRecipeById = asyncHandler(async (req, res) => {
   const recipe = await Recipe.findById(req.params.id).populate('user', 'name');
-  if (recipe) {
-    res.status(200).json({
-      ...recipe._doc,
-      creator: recipe.user?._id,
-      creatorName: recipe.user?.name || 'Unknown',
-    });
-  } else {
+
+  if (!recipe) {
     res.status(404);
     throw new Error('Recipe not found');
   }
+
+  res.status(200).json({
+    ...recipe._doc,
+    creatorName: recipe.user?.name || 'Unknown',
+    creatorId: recipe.user?._id.toString() || '',
+  });
 });
 
 const getUserRecipes = asyncHandler(async (req, res) => {
   const recipes = await Recipe.find({ user: req.user._id }).populate('user', 'name');
+
   const formatted = recipes.map((recipe) => ({
     ...recipe._doc,
     creatorName: recipe.user?.name || 'Unknown',
+    creatorId: recipe.user?._id.toString() || '',
   }));
+
   res.status(200).json(formatted);
 });
 
@@ -69,42 +77,44 @@ const updateRecipe = asyncHandler(async (req, res) => {
   const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
   const recipe = await Recipe.findById(req.params.id);
 
-  if (recipe) {
-    if (recipe.user.toString() !== req.user.id) {
-      res.status(401);
-      throw new Error('User not authorized');
-    }
-
-    recipe.title = title || recipe.title;
-    recipe.description = description || recipe.description;
-    recipe.ingredients = ingredients || recipe.ingredients;
-    recipe.instructions = instructions || recipe.instructions;
-    recipe.imageUrl = imageUrl || recipe.imageUrl;
-    recipe.category = category || recipe.category;
-    recipe.tags = tags || recipe.tags;
-
-    const updatedRecipe = await recipe.save();
-    res.status(200).json(updatedRecipe);
-  } else {
+  if (!recipe) {
     res.status(404);
     throw new Error('Recipe not found');
   }
+
+  // Only the creator can update
+  if (recipe.user.toString() !== req.user._id.toString()) {
+    res.status(401);
+    throw new Error('User not authorized');
+  }
+
+  recipe.title = title || recipe.title;
+  recipe.description = description || recipe.description;
+  recipe.ingredients = ingredients || recipe.ingredients;
+  recipe.instructions = instructions || recipe.instructions;
+  recipe.imageUrl = imageUrl || recipe.imageUrl;
+  recipe.category = category || recipe.category;
+  recipe.tags = tags || recipe.tags;
+
+  const updatedRecipe = await recipe.save();
+  res.status(200).json(updatedRecipe);
 });
 
 const deleteRecipe = asyncHandler(async (req, res) => {
   const recipe = await Recipe.findById(req.params.id);
 
-  if (recipe) {
-    if (recipe.user.toString() !== req.user.id) {
-      res.status(401);
-      throw new Error('User not authorized');
-    }
-    await recipe.deleteOne();
-    res.status(200).json({ message: 'Recipe removed' });
-  } else {
+  if (!recipe) {
     res.status(404);
     throw new Error('Recipe not found');
   }
+
+  if (recipe.user.toString() !== req.user._id.toString()) {
+    res.status(401);
+    throw new Error('User not authorized');
+  }
+
+  await recipe.deleteOne();
+  res.status(200).json({ message: 'Recipe removed' });
 });
 
 const uploadImage = (req, res) => {
