@@ -1,4 +1,4 @@
-const express = require('express'); 
+const express = require('express');
 const {
   createRecipe,
   getRecipes,
@@ -6,7 +6,10 @@ const {
   getUserRecipes,
   updateRecipe,
   deleteRecipe,
-  uploadImage
+  uploadImage,
+  toggleLike,
+  rateRecipe,
+  addComment
 } = require('../controllers/recipeController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -19,5 +22,8 @@ router.post('/', protect, createRecipe);
 router.get('/:id', getRecipeById);
 router.put('/:id', protect, updateRecipe);
 router.delete('/:id', protect, deleteRecipe);
+router.post('/:id/like', protect, toggleLike);
+router.post('/:id/rate', protect, rateRecipe);
+router.post('/:id/comment', protect, addComment);
 
 module.exports = router;
