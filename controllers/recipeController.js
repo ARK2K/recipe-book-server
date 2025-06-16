@@ -29,17 +29,27 @@ const createRecipe = asyncHandler(async (req, res) => {
 });
 
 const getRecipes = asyncHandler(async (req, res) => {
-  const { category, tag } = req.query;
+  const { category, tag, ingredient, sort } = req.query;
   let filter = {};
-  if (category) filter.category = category;
-  if (tag) filter.tags = tag;
 
-  const recipes = await Recipe.find(filter).populate('user', 'name');
+  if (category) filter.category = { $regex: category, $options: 'i' };
+  if (tag) filter.tags = { $in: [new RegExp(tag, 'i')] };
+  if (ingredient) filter.ingredients = { $elemMatch: { $regex: ingredient, $options: 'i' } };
+
+  let sortOption = { createdAt: -1 };
+  if (sort === 'oldest') sortOption = { createdAt: 1 };
+  if (sort === 'rating') sortOption = { averageRating: -1 };
+
+  const recipes = await Recipe.find(filter)
+    .populate('user', 'name')
+    .sort(sortOption);
+
   const formatted = recipes.map(r => ({
     ...r._doc,
     creatorName: r.user?.name || 'Unknown',
     creatorId: r.user?._id.toString()
   }));
+
   res.status(200).json(formatted);
 });
 
