@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Recipe = require('../models/Recipe');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '15m' });
@@ -83,10 +84,26 @@ const getUserProfile = async (req, res) => {
   });
 };
 
+const toggleFavorite = async (req, res) => {
+  const recipeId = req.params.id;
+  const user = await User.findById(req.user._id);
+  const index = user.favorites.indexOf(recipeId);
+
+  if (index > -1) {
+    user.favorites.splice(index, 1);
+  } else {
+    user.favorites.push(recipeId);
+  }
+
+  await user.save();
+  res.status(200).json({ message: 'Favorites updated', favorites: user.favorites });
+};
+
 module.exports = {
   registerUser,
   loginUser,
   refreshToken,
   logoutUser,
   getUserProfile,
+  toggleFavorite
 };

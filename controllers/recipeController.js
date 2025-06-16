@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const Recipe = require('../models/Recipe');
+const User = require('../models/User');
 const cloudinary = require('../config/cloudinaryConfig');
 const multer = require('multer');
 
@@ -8,10 +9,6 @@ const upload = multer({ storage });
 
 const createRecipe = asyncHandler(async (req, res) => {
   const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
-  if (!title || !description || !ingredients || !instructions) {
-    res.status(400);
-    throw new Error('Please fill all required fields');
-  }
 
   const recipe = await Recipe.create({
     user: req.user._id,
@@ -40,9 +37,7 @@ const getRecipes = asyncHandler(async (req, res) => {
   if (sort === 'oldest') sortOption = { createdAt: 1 };
   if (sort === 'rating') sortOption = { averageRating: -1 };
 
-  const recipes = await Recipe.find(filter)
-    .populate('user', 'name')
-    .sort(sortOption);
+  const recipes = await Recipe.find(filter).populate('user', 'name').sort(sortOption);
 
   const formatted = recipes.map(r => ({
     ...r._doc,
@@ -77,6 +72,21 @@ const getUserRecipes = asyncHandler(async (req, res) => {
     creatorName: r.user?.name || 'Unknown',
     creatorId: r.user?._id.toString()
   }));
+  res.status(200).json(formatted);
+});
+
+const getFavoriteRecipes = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).populate({
+    path: 'favorites',
+    populate: { path: 'user', select: 'name' }
+  });
+
+  const formatted = user.favorites.map(r => ({
+    ...r._doc,
+    creatorName: r.user?.name || 'Unknown',
+    creatorId: r.user?._id.toString()
+  }));
+
   res.status(200).json(formatted);
 });
 
@@ -192,6 +202,7 @@ module.exports = {
   getRecipes,
   getRecipeById,
   getUserRecipes,
+  getFavoriteRecipes,
   updateRecipe,
   deleteRecipe,
   uploadImage,
