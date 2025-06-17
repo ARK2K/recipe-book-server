@@ -4,6 +4,7 @@ const {
   getRecipes,
   getRecipeById,
   getUserRecipes,
+  getFavoriteRecipes,
   updateRecipe,
   deleteRecipe,
   uploadImage,
@@ -17,6 +18,7 @@ const router = express.Router();
 
 router.post('/upload', protect, uploadImage);
 router.get('/my-recipes', protect, getUserRecipes);
+router.get('/favorites', protect, getFavoriteRecipes);
 router.get('/', getRecipes);
 router.post('/', protect, createRecipe);
 router.get('/:id', getRecipeById);

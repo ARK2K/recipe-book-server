@@ -5,7 +5,8 @@ const {
   loginUser,
   getUserProfile,
   refreshToken,
-  logoutUser
+  logoutUser,
+  toggleFavorite
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -34,5 +35,6 @@ router.get('/profile', protect, getUserProfile);
 router.get('/me', protect, getUserProfile);
 router.get('/refresh', refreshToken);
 router.get('/logout', logoutUser);
+router.post('/favorites/:id', protect, toggleFavorite);
 
 module.exports = router;
