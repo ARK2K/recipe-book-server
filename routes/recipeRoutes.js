@@ -10,7 +10,8 @@ const {
   uploadImage,
   toggleLike,
   rateRecipe,
-  addComment
+  addComment,
+  toggleFavoriteRecipe
 } = require('../controllers/recipeController');
 const { protect } = require('../middleware/authMiddleware');
 
