@@ -197,6 +197,29 @@ const addComment = asyncHandler(async (req, res) => {
   res.status(201).json({ message: 'Comment added' });
 });
 
+const toggleFavoriteRecipe = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const recipeId = req.params.id;
+
+  const user = await User.findById(userId);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  const index = user.favorites.indexOf(recipeId);
+
+  if (index === -1) {
+    user.favorites.push(recipeId);
+    await user.save();
+    return res.status(200).json({ message: 'Recipe added to favorites' });
+  } else {
+    user.favorites.splice(index, 1);
+    await user.save();
+    return res.status(200).json({ message: 'Recipe removed from favorites' });
+  }
+});
+
 module.exports = {
   createRecipe,
   getRecipes,
@@ -209,5 +232,6 @@ module.exports = {
   upload,
   toggleLike,
   rateRecipe,
-  addComment
+  addComment,
+  toggleFavoriteRecipe,
 };

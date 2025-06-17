@@ -27,5 +27,6 @@ router.delete('/:id', protect, deleteRecipe);
 router.post('/:id/like', protect, toggleLike);
 router.post('/:id/rate', protect, rateRecipe);
 router.post('/:id/comment', protect, addComment);
+router.post('/favorites/:id', protect, toggleFavoriteRecipe);
 
 module.exports = router;
