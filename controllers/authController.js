@@ -77,10 +77,12 @@ const getUserProfile = async (req, res) => {
     return res.status(401).json({ message: 'User not authenticated' });
   }
 
+  const user = await User.findById(req.user._id);
   res.status(200).json({
-    _id: req.user._id,
-    name: req.user.name,
-    email: req.user.email,
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    favorites: user.favorites,
   });
 };
 
