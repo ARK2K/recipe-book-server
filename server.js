@@ -4,6 +4,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -45,8 +46,11 @@ app.use('/api/users', authRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api', healthRoutes);
 
-app.get('/', (req, res) => {
-  res.send('Recipe Book API is running!');
+const clientBuildPath = path.join(__dirname, 'client', 'build');
+app.use(express.static(clientBuildPath));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
 app.use(errorHandler);
