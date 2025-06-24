@@ -185,14 +185,14 @@ const rateRecipe = asyncHandler(async (req, res) => {
 });
 
 const addComment = asyncHandler(async (req, res) => {
-  const { text, stars } = req.body;
+  const { comment, rating } = req.body;
   const recipe = await Recipe.findById(req.params.id);
   if (!recipe) {
     res.status(404);
     throw new Error('Recipe not found');
   }
 
-  recipe.comments.push({ user: req.user._id, text, stars });
+  recipe.comments.push({ user: req.user._id, comment, rating });
   await recipe.save();
   res.status(201).json({ message: 'Comment added' });
 });
