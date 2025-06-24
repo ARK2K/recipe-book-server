@@ -54,8 +54,7 @@ const getRecipeById = asyncHandler(async (req, res) => {
     .populate('comments.user', 'name');
 
   if (!recipe) {
-    res.status(404);
-    throw new Error('Recipe not found');
+    return res.status(404).json({ message: 'Recipe not found' });
   }
 
   res.status(200).json({
@@ -94,12 +93,10 @@ const updateRecipe = asyncHandler(async (req, res) => {
   const { title, description, ingredients, instructions, imageUrl, category, tags } = req.body;
   const recipe = await Recipe.findById(req.params.id);
   if (!recipe) {
-    res.status(404);
-    throw new Error('Recipe not found');
+    return res.status(404).json({ message: 'Recipe not found' });
   }
   if (recipe.user.toString() !== req.user._id.toString()) {
-    res.status(401);
-    throw new Error('User not authorized');
+    return res.status(401).json({ message: 'User not authorized' });
   }
 
   recipe.title = title || recipe.title;
@@ -117,12 +114,10 @@ const updateRecipe = asyncHandler(async (req, res) => {
 const deleteRecipe = asyncHandler(async (req, res) => {
   const recipe = await Recipe.findById(req.params.id);
   if (!recipe) {
-    res.status(404);
-    throw new Error('Recipe not found');
+    return res.status(404).json({ message: 'Recipe not found' });
   }
   if (recipe.user.toString() !== req.user._id.toString()) {
-    res.status(401);
-    throw new Error('User not authorized');
+    return res.status(401).json({ message: 'User not authorized' });
   }
 
   await recipe.deleteOne();
@@ -149,8 +144,7 @@ const uploadImage = (req, res) => {
 const toggleLike = asyncHandler(async (req, res) => {
   const recipe = await Recipe.findById(req.params.id);
   if (!recipe) {
-    res.status(404);
-    throw new Error('Recipe not found');
+    return res.status(404).json({ message: 'Recipe not found' });
   }
 
   const index = recipe.likes.indexOf(req.user._id);
@@ -168,8 +162,7 @@ const rateRecipe = asyncHandler(async (req, res) => {
   const { stars } = req.body;
   const recipe = await Recipe.findById(req.params.id);
   if (!recipe) {
-    res.status(404);
-    throw new Error('Recipe not found');
+    return res.status(404).json({ message: 'Recipe not found' });
   }
 
   const existing = recipe.ratings.find(r => r.user.toString() === req.user._id.toString());
@@ -185,28 +178,35 @@ const rateRecipe = asyncHandler(async (req, res) => {
 });
 
 const addComment = asyncHandler(async (req, res) => {
-  console.log('🔧 Incoming comment request');
-  console.log('User from token:', req.user);  // Check if user is attached by authMiddleware
-  console.log('Request body:', req.body);
+  console.log('📨 Comment Submission Triggered');
+  console.log('User:', req.user);
+  console.log('Body:', req.body);
 
   const { comment, rating } = req.body;
-  const recipe = await Recipe.findById(req.params.id);
 
-  if (!recipe) {
-    console.log('❌ Recipe not found');
-    res.status(404);
-    throw new Error('Recipe not found');
+  if (!comment) {
+    return res.status(400).json({ message: 'Comment text is required' });
   }
 
-  recipe.comments.push({ user: req.user._id, comment, rating });
+  const recipe = await Recipe.findById(req.params.id);
+  if (!recipe) {
+    console.log('❌ Recipe not found:', req.params.id);
+    return res.status(404).json({ message: 'Recipe not found' });
+  }
 
   try {
+    recipe.comments.push({
+      user: req.user._id,
+      comment,
+      rating: rating || 0,
+    });
+
     await recipe.save();
     console.log('✅ Comment saved successfully');
     res.status(201).json({ message: 'Comment added' });
-  } catch (err) {
-    console.error('💥 Error saving comment:', err);
-    res.status(500).json({ message: 'Failed to save comment', error: err.message });
+  } catch (error) {
+    console.error('💥 Failed to save comment:', error);
+    res.status(500).json({ message: 'Failed to save comment', error: error.message });
   }
 });
 
@@ -216,8 +216,7 @@ const toggleFavoriteRecipe = asyncHandler(async (req, res) => {
 
   const user = await User.findById(userId);
   if (!user) {
-    res.status(404);
-    throw new Error('User not found');
+    return res.status(404).json({ message: 'User not found' });
   }
 
   const index = user.favorites.indexOf(recipeId);

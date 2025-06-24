@@ -14,13 +14,15 @@ const allowedOrigins = [
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
+app.get('/', (req, res) => {
+  res.json({ message: 'API running' });
+});
+
 app.use(cors({
   origin: function (origin, callback) {
-    console.log('CORS check for origin:', origin);
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
-      console.error('Blocked by CORS:', origin);
       return callback(new Error('Not allowed by CORS: ' + origin), false);
     }
   },
