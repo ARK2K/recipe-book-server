@@ -185,16 +185,29 @@ const rateRecipe = asyncHandler(async (req, res) => {
 });
 
 const addComment = asyncHandler(async (req, res) => {
+  console.log('🔧 Incoming comment request');
+  console.log('User from token:', req.user);  // Check if user is attached by authMiddleware
+  console.log('Request body:', req.body);
+
   const { comment, rating } = req.body;
   const recipe = await Recipe.findById(req.params.id);
+
   if (!recipe) {
+    console.log('❌ Recipe not found');
     res.status(404);
     throw new Error('Recipe not found');
   }
 
   recipe.comments.push({ user: req.user._id, comment, rating });
-  await recipe.save();
-  res.status(201).json({ message: 'Comment added' });
+
+  try {
+    await recipe.save();
+    console.log('✅ Comment saved successfully');
+    res.status(201).json({ message: 'Comment added' });
+  } catch (err) {
+    console.error('💥 Error saving comment:', err);
+    res.status(500).json({ message: 'Failed to save comment', error: err.message });
+  }
 });
 
 const toggleFavoriteRecipe = asyncHandler(async (req, res) => {
