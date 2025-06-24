@@ -3,7 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const path = require('path');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -46,13 +45,6 @@ const healthRoutes = require('./routes/healthRoutes');
 app.use('/api/users', authRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api', healthRoutes);
-
-const clientDistPath = path.join(__dirname, 'client', 'dist');
-app.use(express.static(clientDistPath));
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(clientDistPath, 'index.html'));
-});
 
 app.use(errorHandler);
 
