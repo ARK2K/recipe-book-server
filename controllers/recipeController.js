@@ -178,10 +178,6 @@ const rateRecipe = asyncHandler(async (req, res) => {
 });
 
 const addComment = asyncHandler(async (req, res) => {
-  console.log('📨 Comment Submission Triggered');
-  console.log('User:', req.user);
-  console.log('Body:', req.body);
-
   const { comment, rating } = req.body;
 
   if (!comment) {
@@ -190,24 +186,17 @@ const addComment = asyncHandler(async (req, res) => {
 
   const recipe = await Recipe.findById(req.params.id);
   if (!recipe) {
-    console.log('❌ Recipe not found:', req.params.id);
     return res.status(404).json({ message: 'Recipe not found' });
   }
 
-  try {
-    recipe.comments.push({
-      user: req.user._id,
-      comment,
-      rating: rating || 0,
-    });
+  recipe.comments.push({
+    user: req.user._id,
+    comment,
+    rating: rating || 0,
+  });
 
-    await recipe.save();
-    console.log('✅ Comment saved successfully');
-    res.status(201).json({ message: 'Comment added' });
-  } catch (error) {
-    console.error('💥 Failed to save comment:', error);
-    res.status(500).json({ message: 'Failed to save comment', error: error.message });
-  }
+  await recipe.save();
+  res.status(201).json({ message: 'Comment added' });
 });
 
 const toggleFavoriteRecipe = asyncHandler(async (req, res) => {
