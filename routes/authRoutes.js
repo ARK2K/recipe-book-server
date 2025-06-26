@@ -9,6 +9,7 @@ const {
   toggleFavorite
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
+const { getFavoriteRecipes } = require('../controllers/recipeController');
 
 const router = express.Router();
 
@@ -35,6 +36,8 @@ router.get('/profile', protect, getUserProfile);
 router.get('/me', protect, getUserProfile);
 router.get('/refresh', refreshToken);
 router.get('/logout', logoutUser);
+
+router.get('/favorites', protect, getFavoriteRecipes);
 router.post('/favorites/:id', protect, toggleFavorite);
 
 module.exports = router;
