@@ -172,13 +172,14 @@ const rateRecipe = asyncHandler(async (req, res) => {
     recipe.ratings.push({ user: req.user._id, stars });
   }
 
-  recipe.calculateAverageRating();
+  recipe.calculateMetrics();
   await recipe.save();
   res.status(200).json({ averageRating: recipe.averageRating, numReviews: recipe.numReviews });
 });
 
 const addComment = asyncHandler(async (req, res) => {
   const { comment, rating } = req.body;
+
   if (!comment) {
     return res.status(400).json({ message: 'Comment text is required' });
   }
@@ -191,10 +192,12 @@ const addComment = asyncHandler(async (req, res) => {
   recipe.comments.push({
     user: req.user._id,
     text: comment,
-    stars: rating || 0,
+    stars: rating || 0
   });
 
+  recipe.calculateMetrics();
   await recipe.save();
+
   res.status(201).json({ message: 'Comment added' });
 });
 
