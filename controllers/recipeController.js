@@ -190,8 +190,8 @@ const addComment = asyncHandler(async (req, res) => {
 
   recipe.comments.push({
     user: req.user._id,
-    comment,
-    rating: rating || 0,
+    text: comment,
+    stars: rating || 0,
   });
 
   await recipe.save();
