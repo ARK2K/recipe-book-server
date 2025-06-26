@@ -179,7 +179,6 @@ const rateRecipe = asyncHandler(async (req, res) => {
 
 const addComment = asyncHandler(async (req, res) => {
   const { comment, rating } = req.body;
-
   if (!comment) {
     return res.status(400).json({ message: 'Comment text is required' });
   }
@@ -209,7 +208,6 @@ const toggleFavoriteRecipe = asyncHandler(async (req, res) => {
   }
 
   const index = user.favorites.indexOf(recipeId);
-
   if (index === -1) {
     user.favorites.push(recipeId);
     await user.save();
