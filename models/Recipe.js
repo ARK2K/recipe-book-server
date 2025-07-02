@@ -10,23 +10,27 @@ const RecipeSchema = new mongoose.Schema({
   category: { type: String },
   tags: [{ type: String }],
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  ratings: [{
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    stars: { type: Number, min: 1, max: 5 }
-  }],
-  comments: [{
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    text: { type: String, required: true },
-    stars: { type: Number, min: 1, max: 5 },
-    createdAt: { type: Date, default: Date.now }
-  }],
+  ratings: [
+    {
+      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      stars: { type: Number, min: 1, max: 5 }
+    }
+  ],
+  comments: [
+    {
+      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      text: { type: String, required: true },
+      stars: { type: Number, min: 1, max: 5 },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
   averageRating: { type: Number, default: 0 },
   numFavorites: { type: Number, default: 0 },
   numReviews: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 
-RecipeSchema.methods.calculateMetrics = function() {
+RecipeSchema.methods.calculateMetrics = function () {
   this.numFavorites = this.favorites.length;
   this.numReviews = this.comments.length;
   if (this.ratings.length) {

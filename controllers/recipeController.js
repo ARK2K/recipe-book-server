@@ -192,7 +192,8 @@ const addComment = asyncHandler(async (req, res) => {
   recipe.comments.push({
     user: req.user._id,
     text: comment,
-    stars: rating || 0
+    stars: rating || 0,
+    createdAt: new Date()
   });
 
   recipe.calculateMetrics();
