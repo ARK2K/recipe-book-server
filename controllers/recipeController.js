@@ -39,10 +39,23 @@ const getRecipes = asyncHandler(async (req, res) => {
 
   const recipes = await Recipe.find(filter).populate('user', 'name').sort(sortOption);
 
+  let favoriteIds = [];
+  if (req.headers.authorization?.startsWith('Bearer ')) {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id);
+      favoriteIds = user?.favorites.map(fav => fav.toString()) || [];
+    } catch (err) {
+      favoriteIds = [];
+    }
+  }
+
   const formatted = recipes.map(r => ({
     ...r._doc,
     creatorName: r.user?.name || 'Unknown',
-    creatorId: r.user?._id.toString()
+    creatorId: r.user?._id.toString(),
+    isFavorited: favoriteIds.includes(r._id.toString()),
   }));
 
   res.status(200).json(formatted);
@@ -57,10 +70,23 @@ const getRecipeById = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'Recipe not found' });
   }
 
+  let isFavorited = false;
+  if (req.headers.authorization?.startsWith('Bearer ')) {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id);
+      isFavorited = user?.favorites.includes(recipe._id.toString());
+    } catch (err) {
+      isFavorited = false;
+    }
+  }
+
   res.status(200).json({
     ...recipe._doc,
     creatorName: recipe.user?.name || 'Unknown',
-    creatorId: recipe.user?._id.toString() || ''
+    creatorId: recipe.user?._id.toString(),
+    isFavorited,
   });
 });
 
