@@ -11,15 +11,11 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  process.env.FRONTEND_URL
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
-app.get('/', (req, res) => {
-  res.json({ message: 'API running' });
-});
-
-app.use(cors({
-  origin: (origin, callback) => {
+const corsOptions = {
+  origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -27,9 +23,9 @@ app.use(cors({
     }
   },
   credentials: true,
-}));
-app.options('*', cors());
+};
 
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -44,6 +40,10 @@ mongoose.connect(process.env.MONGO_URI)
 const authRoutes = require('./routes/authRoutes');
 const recipeRoutes = require('./routes/recipeRoutes');
 const healthRoutes = require('./routes/healthRoutes');
+
+app.get('/', (req, res) => {
+  res.json({ message: 'API running' });
+});
 
 app.use('/api/users', authRoutes);
 app.use('/api/recipes', recipeRoutes);
