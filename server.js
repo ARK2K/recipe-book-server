@@ -19,15 +19,16 @@ app.get('/', (req, res) => {
 });
 
 app.use(cors({
-  origin: function (origin, callback) {
+  origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
+      callback(null, true);
     } else {
-      return callback(new Error('Not allowed by CORS: ' + origin), false);
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
 }));
+app.options('*', cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
