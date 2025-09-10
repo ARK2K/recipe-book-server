@@ -11,6 +11,8 @@
   "author": "Ankur Kushwaha",
   "license": "ISC",
   "dependencies": {
+    "@clerk/backend": "^2.13.0",
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.6.1",
     "cookie-parser": "^1.4.7",
@@ -21,6 +23,7 @@
     "express-validator": "^7.2.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.1",
-    "multer": "^2.0.0"
+    "multer": "^2.0.0",
+    "openai": "^5.20.1"
   }
 }

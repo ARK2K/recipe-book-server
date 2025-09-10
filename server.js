@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { errorHandler } = require('./middleware/errorMiddleware');
+const { ClerkExpressRequireAuth } = require('@clerk/clerk-sdk-node');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,6 +17,7 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
+    // Allow requests with no origin like Postman or curl
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -30,27 +32,38 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-mongoose.connect(process.env.MONGO_URI)
+// MongoDB connection
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
-  .catch(err => {
+  .catch((err) => {
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
 
+// Import routes
 const authRoutes = require('./routes/authRoutes');
 const recipeRoutes = require('./routes/recipeRoutes');
 const healthRoutes = require('./routes/healthRoutes');
+const aiRoutes = require('./routes/aiRoutes'); // AI routes if any
 
+// Public health check route
 app.get('/', (req, res) => {
   res.json({ message: 'API running' });
 });
 
-app.use('/api/users', authRoutes);
-app.use('/api/recipes', recipeRoutes);
+// Routes with Clerk auth protection
+app.use('/api/users', ClerkExpressRequireAuth(), authRoutes);
+app.use('/api/recipes', ClerkExpressRequireAuth(), recipeRoutes);
+app.use('/api/ai', ClerkExpressRequireAuth(), aiRoutes); // Protect AI routes
+
+// Public API routes
 app.use('/api', healthRoutes);
 
+// Error Handler Middleware
 app.use(errorHandler);
 
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

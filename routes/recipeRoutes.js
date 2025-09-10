@@ -11,23 +11,22 @@ const {
   toggleLike,
   rateRecipe,
   addComment,
-  toggleFavoriteRecipe
+  toggleFavoriteRecipe,
 } = require('../controllers/recipeController');
-const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.post('/upload', protect, uploadImage);
-router.get('/my-recipes', protect, getUserRecipes);
-router.get('/favorites', protect, getFavoriteRecipes);
+router.post('/upload', uploadImage);
+router.get('/my-recipes', getUserRecipes);
+router.get('/favorites', getFavoriteRecipes);
 router.get('/', getRecipes);
-router.post('/', protect, createRecipe);
+router.post('/', createRecipe);
 router.get('/:id', getRecipeById);
-router.put('/:id', protect, updateRecipe);
-router.delete('/:id', protect, deleteRecipe);
-router.post('/:id/like', protect, toggleLike);
-router.post('/:id/rate', protect, rateRecipe);
-router.post('/:id/comment', protect, addComment);
-router.post('/favorites/:id', protect, toggleFavoriteRecipe);
+router.put('/:id', updateRecipe);
+router.delete('/:id', deleteRecipe);
+router.post('/:id/like', toggleLike);
+router.post('/:id/rate', rateRecipe);
+router.post('/:id/comment', addComment);
+router.post('/favorites/:id', toggleFavoriteRecipe);
 
 module.exports = router;
