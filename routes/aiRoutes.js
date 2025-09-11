@@ -1,11 +1,10 @@
 const express = require('express');
-const { generateRecipe, autoTagRecipe, generateGroceryList } = require('../controllers/aiController');
-const { ClerkExpressRequireAuth } = require('@clerk/clerk-sdk-node');
+const { generateRecipe, autoTagRecipe } = require('../controllers/aiController');
+const { protect } = require('../middleware/authMiddleware'); // reuse JWT auth
 
 const router = express.Router();
 
-router.post('/generate-recipe', ClerkExpressRequireAuth(), generateRecipe);
-router.post('/auto-tag', ClerkExpressRequireAuth(), autoTagRecipe);
-router.post('/grocery-list', ClerkExpressRequireAuth(), generateGroceryList);
+router.post('/generate-recipe', protect, generateRecipe);
+router.post('/auto-tag', protect, autoTagRecipe);
 
 module.exports = router;
